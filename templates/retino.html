@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Diabetic Retinopathy Detection</title>
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
+  <script src="../static/js/dia.js"></script>
+  <link rel="stylesheet" href="../static/css/style1.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+
+</head>
+<body>
+  <br><br>
+<h1 align="center "><font color="#5c8a8a">Detecting Diabetic Retinopathy Using Retinal Images</font></h1>
+<center>
+  <br><br>
+<select id="id_one" onchange="show_hide_cancer()" class="button">
+  <option value="dia_ret">Upload Retinal Images</option>
+</select>
+<br>
+<br>
+  <input id="file_" type="file" name="pic" accept="image/*" capture="camera" onchange="readURL(this);" class="button"/>
+  <br>
+  <br>
+<button onclick="submit();changeText('button1', 'Analysing....', 'Analyse Image');" class="button" id="button1">Analyse Image</button></center>
+<br>
+  <center>
+  <h2 id="given"></h2>
+  <div class="gif">
+  <img src="../static/images/pht.gif" id="blah" class="demo">
+  </div>
+  <br><br>
+ <!-- <h5 id="Analysing"></h5> -->
+  <h2 id="demo" class="under text-white"></h2><br><br><br>
+  <table align="center">
+    <td height="50%" width="100%">
+    <h4><font color="#5c8a8a"><div id="status" class="text-center text-success"> </div></font></h4>
+    <h4><font color="#5c8a8a"><div id="status1" class="text-center text-warning" > </div></font></h4>
+    <h4><font color="#5c8a8a"><div id="status2" class="text-center text-white" > </div></font></h4>
+    <h4><font color="#5c8a8a"><div id="status3" class="text-center text-danger" > </div></font></h4><br><br>
+
+      <h3><font color="#5c8a8a"><div id="result" class="text-center text-success"> </div></font></h3>
+  </td>
+ </table>
+<br>
+<a href="checkup.html"><button class="button">Home</button></a>
+<a href="retino.html"><button class="button">Reset</button></a>
+
+</center>
+<br><br><br><br><br><br><br><br><br><br><br>
+</body>
+<script>
+     function readURL(input) {
+      if (input.files && input.files[0]) {
+          var reader = new FileReader();
+
+          reader.onload = function (e) {
+              $('#blah')
+                  .attr('src', e.target.result);
+          };
+
+          reader.readAsDataURL(input.files[0]);
+      }
+  }
+
+
+
+
+
+
+
+
+  var map = null;
+    var markerArray = [];
+    function submit(){
+
+    var val = $("#id_one").val();
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "http://127.0.0.1:5008/", true);
+    var data = new FormData();
+    data.append("type", val);
+    if(val != "cancer")
+      {console.log("Here");
+    data.append("img", $("#file_").prop('files')[0]);}
+    xhr.onreadystatechange = function(){
+
+      var obj = JSON.parse(this.responseText)[0];
+      if(!obj["empty"])
+      {
+        $("prediction-id").html(obj["mild"]);
+        $("prediction-id").html(obj["mod"]);
+        $("prediction-id").html(obj["norm"]);
+        $("prediction-id").html(obj["severe"]);
+        if(parseInt(obj["pred_val"]) != 0){
+          plotMap(obj["places"]);
+          addPlaces(obj["places"]);
+        }
+        $("#status").html("<b>"+obj["mild"]+"</b>")
+        $("#status1").html("<b>"+obj["mod"]+"</b>")
+        $("#status2").html("<b>"+obj["norm"]+"</b>")
+        $("#status3").html("<b>"+obj["severe"]+"</b>")
+        document.getElementById("demo").innerHTML = "Analysis Report";
+        clear();
+        $("#result").html("<b>"+obj["pred_val"]+"</b>")
+
+      }
+    };
+    xhr.send(data);
+  }
+  function addPlaces(obj){  
+    $.each(obj, function(index, obj_){
+      console.log(obj_);
+      $("#hospital").append("<div><b>"+obj_["name"]+"</b><br>"+obj_["address"]+"</div><br><br><br>");
+    });
+  }
+  function initMap(){
+      var  kolkata= {lat: 22.567627, lng: 88.347444};
+  // The map, centered at Uluru
+    map = new google.maps.Map(
+      document.getElementById('map'), {zoom: 10, center: kolkata});
+  }
+  function clear()
+  {
+    for(var i=markerArray.length-1; i>=0; i--){
+      markerArray[i].setMap(null);
+      markerArray.pop();
+    }
+    $("#hospital").html("");
+  }
+  function plotMap(places){
+    
+    $.each(places, function(index,obj){
+      if(map != null){
+        markerArray.push(new google.maps.Marker({"position": obj["location"], map: map}));
+      }
+    });
+  }
+  function changeText(button, text, textToChangeBackTo) {
+  buttonId = document.getElementById(button);
+  buttonId.textContent = text;
+  setTimeout(function() { back(buttonId, textToChangeBackTo); }, 10000);
+  function back(button, textToChangeBackTo){ button.textContent = textToChangeBackTo; }
+}
+function show_hide_cancer(){
+  if($("#id_one").val() == "cancer")
+    {$("#myDIV").show();
+    $("#file_").hide();}
+    else{
+      $("#myDIV").hide();
+    $("#file_").show();
+    }
+}
+
+
+
+
+
+
+var map = null;
+    var markerArray = [];
+    function submit(){
+
+    var val = $("#id_one").val();
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', "http://127.0.0.1:5008/", true);
+    var data = new FormData();
+    data.append("type", val);
+    if(val != "cancer")
+      {console.log("Here");
+    data.append("img", $("#file_").prop('files')[0]);}
+    xhr.onreadystatechange = function(){
+
+      var obj = JSON.parse(this.responseText)[0];
+      if(!obj["empty"])
+      {
+        $("prediction-id").html(obj["mild"]);
+        $("prediction-id").html(obj["mod"]);
+        $("prediction-id").html(obj["norm"]);
+        $("prediction-id").html(obj["severe"]);
+        if(parseInt(obj["pred_val"]) != 0){
+          plotMap(obj["places"]);
+          addPlaces(obj["places"]);
+        }
+        $("#status").html("<b>"+obj["mild"]+"</b>")
+        $("#status1").html("<b>"+obj["mod"]+"</b>")
+        $("#status2").html("<b>"+obj["norm"]+"</b>")
+        $("#status3").html("<b>"+obj["severe"]+"</b>")
+        document.getElementById("demo").innerHTML = "Analysis Report";
+        clear();
+        $("#result").html("<b>"+obj["pred_val"]+"</b>")
+
+      }
+    };
+    xhr.send(data);
+  }
+  function addPlaces(obj){  
+    $.each(obj, function(index, obj_){
+      console.log(obj_);
+      $("#hospital").append("<div><b>"+obj_["name"]+"</b><br>"+obj_["address"]+"</div><br><br><br>");
+    });
+  }
+  function initMap(){
+      var  kolkata= {lat: 22.567627, lng: 88.347444};
+  // The map, centered at Uluru
+    map = new google.maps.Map(
+      document.getElementById('map'), {zoom: 10, center: kolkata});
+  }
+  function clear()
+  {
+    for(var i=markerArray.length-1; i>=0; i--){
+      markerArray[i].setMap(null);
+      markerArray.pop();
+    }
+    $("#hospital").html("");
+  }
+  function plotMap(places){
+    
+    $.each(places, function(index,obj){
+      if(map != null){
+        markerArray.push(new google.maps.Marker({"position": obj["location"], map: map}));
+      }
+    });
+  }
+  function changeText(button, text, textToChangeBackTo) {
+  buttonId = document.getElementById(button);
+  buttonId.textContent = text;
+  setTimeout(function() { back(buttonId, textToChangeBackTo); }, 10000);
+  function back(button, textToChangeBackTo){ button.textContent = textToChangeBackTo; }
+}
+function show_hide_cancer(){
+  if($("#id_one").val() == "cancer")
+    {$("#myDIV").show();
+    $("#file_").hide();}
+    else{
+      $("#myDIV").hide();
+    $("#file_").show();
+    }
+}
+
+
+</script>
+</html>
